@@ -1,64 +1,47 @@
 import streamlit as st
 from gtts import gTTS
+from googletrans import Translator
 import base64
 
-st.set_page_config(page_title="TTS App", page_icon="🔊", layout="centered")
+st.title("🌍 Translate & Speak App")
 
-# 🎨 Custom UI Styling
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f5f7fa;
-    }
-    .title {
-        text-align: center;
-        font-size: 36px;
-        font-weight: bold;
-        color: #4A90E2;
-    }
-    </style>
-""", unsafe_allow_html=True)
+text = st.text_area("Enter text (any language)")
 
-st.markdown('<div class="title">🔊 Text to Speech Converter</div>', unsafe_allow_html=True)
-
-# 🎙️ Input
-text = st.text_area("Enter your text here", height=150)
-
-# 🌍 Language selection
+# Target language selection
 languages = {
-    "English": "en",
-    "Tamil": "ta",
     "Hindi": "hi",
-    "French": "fr",
-    "Spanish": "es"
+    "Tamil": "ta",
+    "English": "en",
+    "French": "fr"
 }
-lang_choice = st.selectbox("Choose Language", list(languages.keys()))
 
-# 🔊 Speed control
-speed = st.radio("Select Speed", ["Normal", "Slow"])
+target_lang = st.selectbox("Convert speech to:", list(languages.keys()))
 
-# 🎯 Convert Button
-if st.button("Convert to Speech"):
-    if text.strip() != "":
-        tts = gTTS(
-            text=text,
-            lang=languages[lang_choice],
-            slow=True if speed == "Slow" else False
-        )
+if st.button("Translate & Speak"):
+    if text.strip():
+        try:
+            translator = Translator()
 
-        file_path = "output.mp3"
-        tts.save(file_path)
+            # 🌍 Translate text
+            translated = translator.translate(text, dest=languages[target_lang])
+            translated_text = translated.text
 
-        # 🔊 Play audio
-        audio_file = open(file_path, "rb")
-        audio_bytes = audio_file.read()
-        st.audio(audio_bytes, format="audio/mp3")
+            st.write("📝 Translated Text:")
+            st.success(translated_text)
 
-        # 📥 Download button
-        b64 = base64.b64encode(audio_bytes).decode()
-        href = f'<a href="data:audio/mp3;base64,{b64}" download="speech.mp3">📥 Download Audio</a>'
-        st.markdown(href, unsafe_allow_html=True)
+            # 🔊 Convert to speech
+            tts = gTTS(text=translated_text, lang=languages[target_lang])
+            tts.save("output.mp3")
 
-        st.success("✅ Conversion successful!")
+            audio = open("output.mp3", "rb").read()
+            st.audio(audio)
+
+            # 📥 Download
+            b64 = base64.b64encode(audio).decode()
+            href = f'<a href="data:audio/mp3;base64,{b64}" download="speech.mp3">📥 Download Audio</a>'
+            st.markdown(href, unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(f"Error: {e}")
     else:
-        st.warning("⚠️ Please enter some text")
+        st.warning("Enter text first!")
