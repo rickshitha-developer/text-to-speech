@@ -1,35 +1,32 @@
 import streamlit as st
 from gtts import gTTS
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import base64
 
-st.title("🌍 Translate & Speak App")
+st.title("🌍 Translate & Speak")
 
-text = st.text_area("Enter text (any language)")
+text = st.text_area("Enter text")
 
-# Target language selection
 languages = {
     "Hindi": "hi",
     "Tamil": "ta",
-    "English": "en",
-    "French": "fr"
+    "English": "en"
 }
 
-target_lang = st.selectbox("Convert speech to:", list(languages.keys()))
+target_lang = st.selectbox("Convert to:", list(languages.keys()))
 
-if st.button("Translate & Speak"):
+if st.button("Convert"):
     if text.strip():
         try:
-            translator = Translator()
+            # 🌍 Translate
+            translated_text = GoogleTranslator(
+                source='auto',
+                target=languages[target_lang]
+            ).translate(text)
 
-            # 🌍 Translate text
-            translated = translator.translate(text, dest=languages[target_lang])
-            translated_text = translated.text
-
-            st.write("📝 Translated Text:")
             st.success(translated_text)
 
-            # 🔊 Convert to speech
+            # 🔊 Speech
             tts = gTTS(text=translated_text, lang=languages[target_lang])
             tts.save("output.mp3")
 
@@ -38,10 +35,7 @@ if st.button("Translate & Speak"):
 
             # 📥 Download
             b64 = base64.b64encode(audio).decode()
-            href = f'<a href="data:audio/mp3;base64,{b64}" download="speech.mp3">📥 Download Audio</a>'
-            st.markdown(href, unsafe_allow_html=True)
+            st.markdown(f'<a href="data:audio/mp3;base64,{b64}" download="speech.mp3">Download</a>', unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Error: {e}")
-    else:
-        st.warning("Enter text first!")
+            st.error(e)
